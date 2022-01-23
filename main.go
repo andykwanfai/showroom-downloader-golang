@@ -82,7 +82,7 @@ func downloadSegments(
 			segment, err := httpGet(urlPrefix + s)
 			if err != nil {
 				handleError(err)
-				return
+				continue
 			}
 			writeFile(desFolder+s, []byte(segment))
 			successMap[s] = true
