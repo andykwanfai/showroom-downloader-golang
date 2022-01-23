@@ -8,21 +8,21 @@ import (
 
 const M3u8Url = "https://hls-origin203.showroom-cdn.com/liveedge/test/chunklist.m3u8"
 
-func httpGetM3u8Stub(url string) string {
+func httpGetM3u8Stub(url string) (string, error) {
 	fmt.Println(url)
 	if url == "streaming_url" {
-		return "<html>room_id=12345678</html>"
+		return "<html>room_id=12345678</html>", nil
 	} else if url == "https://www.showroom-live.com/api/live/streaming_url?room_id=12345678" {
-		return "{\"streaming_url_list\":[{\"url\":\"https://hls-origin203.showroom-cdn.com/liveedge/test/chunklist.m3u8\"}]}"
+		return "{\"streaming_url_list\":[{\"url\":\"https://hls-origin203.showroom-cdn.com/liveedge/test/chunklist.m3u8\"}]}", nil
 	}
 
 	if url == "not_streaming_url" {
-		return "<html>room_id=11111111</html>"
+		return "<html>room_id=11111111</html>", nil
 	} else if url == "https://www.showroom-live.com/api/live/streaming_url?room_id=11111111" {
-		return "{}"
+		return "{}", nil
 	}
 
-	return ""
+	return "", nil
 
 }
 
@@ -61,7 +61,7 @@ func TestGetUrlPrefix(t *testing.T) {
 
 }
 
-func httpGetPlaylistStub(url string) string {
+func httpGetPlaylistStub(url string) (string, error) {
 	return `#EXTM3U
 #EXT-X-VERSION:3
 #EXT-X-TARGETDURATION:4
@@ -77,7 +77,7 @@ media_b406154_5822.ts
 media_b406154_5823.ts
 #EXTINF:2.0,
 media_b406154_5824.ts
-`
+`, nil
 }
 
 func TestGetSegmentList(t *testing.T) {
@@ -157,5 +157,51 @@ func TestGetOldSegmentList(t *testing.T) {
 
 	if !reflect.DeepEqual(oldSegmentList, expectedSegmentList) {
 		t.Fatal("invalid segment list")
+	}
+}
+
+func TestGetAllSegments(t *testing.T) {
+	input := map[string]bool{
+		"media_111.ts":  true,
+		"media_3.ts":    true,
+		"media_11.ts":   true,
+		"media_6.ts":    true,
+		"media_20.ts":   true,
+		"media_10.ts":   true,
+		"media_99.ts":   true,
+		"media_1.ts":    true,
+		"media_19.ts":   true,
+		"media_100.ts":  true,
+		"media_1000.ts": true,
+		"media_21.ts":   true,
+		"media_300.ts":  true,
+		"media_32.ts":   true,
+		"media_101.ts":  true,
+		"media_110.ts":  true,
+		"media_200.ts":  true,
+	}
+	expected := []string{
+		"media_1.ts",
+		"media_3.ts",
+		"media_6.ts",
+		"media_10.ts",
+		"media_11.ts",
+		"media_19.ts",
+		"media_20.ts",
+		"media_21.ts",
+		"media_32.ts",
+		"media_99.ts",
+		"media_100.ts",
+		"media_101.ts",
+		"media_110.ts",
+		"media_111.ts",
+		"media_200.ts",
+		"media_300.ts",
+		"media_1000.ts",
+	}
+	result := getAllSegments(input)
+
+	if !reflect.DeepEqual(result, expected) {
+		t.Fatal("getAllSegments Error")
 	}
 }
