@@ -26,8 +26,8 @@ func main() {
 
 	m3u8Tick := time.Tick(10 * time.Second)
 
+	// wait the stream start
 	var m3u8Url string
-
 	for ; true; <-m3u8Tick {
 		m3u8, err := getM3u8Url(httpGet, url)
 		if err != nil {
@@ -39,34 +39,40 @@ func main() {
 		}
 	}
 
+	// create the folder
+	fmt.Println(desFolder)
 	err := os.Mkdir(desFolder, 0755)
 	if err != nil {
-		handleError(err)
+		handleFatalError(err)
 	}
 
 	urlPrefix := getUrlPrefix(m3u8Url)
 
-	downloadSegmentTick := time.Tick(2 * time.Second)
-	oldSegmentRecoverTick := time.Tick(10 * time.Second)
-
+	// create channel to wait for interrupt signal
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
+	// download old segemnts
+	oldSegmentRecoverTick := time.Tick(10 * time.Second)
 	go func() {
 		for ; true; <-oldSegmentRecoverTick {
 			oldSegmentRecover(m3u8Url, urlPrefix, desFolder, successMap)
 		}
 	}()
 
+	// download new segments
+	downloadSegmentTick := time.Tick(2 * time.Second)
 	go func() {
 		for ; true; <-downloadSegmentTick {
 			downloadNewSegments(m3u8Url, urlPrefix, desFolder, successMap)
 		}
 	}()
 
+	// after interrupt signal
 	<-sigs
 	fmt.Println("exit")
 
+	// merge downloaded segments
 	mergeSegments(successMap, desFolder, folderName)
 }
 

@@ -20,6 +20,11 @@ func handleError(err error) {
 	log.Println(timestamp, err)
 }
 
+func handleFatalError(err error) {
+	timestamp := now().Format("2006-01-02 15:04:05")
+	log.Fatalln(timestamp, err)
+}
+
 func now() time.Time {
 	return time.Now()
 }
@@ -141,6 +146,7 @@ func getAllSegments(successMap map[string]bool) []string {
 		i++
 	}
 
+	// sort the segments
 	sort.Slice(keys, func(i, j int) bool {
 		_, numA := getSegmentFormat(keys[i])
 		_, numB := getSegmentFormat(keys[j])
