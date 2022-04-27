@@ -21,7 +21,8 @@ func main() {
 	}
 
 	dtString := now().Format("20060102")
-	folderName := fmt.Sprintf("%s-showroom-%s", dtString, strings.Replace(url, "https://www.showroom-live.com/", "", 1))
+	urlSplits := strings.Split(url, "/")
+	folderName := fmt.Sprintf("%s-showroom-%s", dtString, urlSplits[len(urlSplits)-1])
 	desFolder := fmt.Sprintf("%s%s/", path, folderName)
 
 	m3u8Tick := time.Tick(10 * time.Second)
