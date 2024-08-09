@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -78,21 +77,22 @@ func main() {
 }
 
 func downloadSegments(
-	m3u8Url string,
+	segmentPrefix string,
 	urlPrefix string,
 	desFolder string,
 	successMap map[string]bool,
 	segmentList []string) {
 
-	for _, s := range segmentList {
-		if successMap[s] == false {
-			segment, err := httpGet(urlPrefix + s)
+	for _, segmentName := range segmentList {
+		fileName := removeSegmentPrefix(segmentName)
+		if successMap[fileName] == false {
+			segment, err := httpGet(urlPrefix + segmentName)
 			if err != nil {
 				handleError(err)
 				continue
 			}
-			writeFile(desFolder+s, []byte(segment))
-			successMap[s] = true
+			writeFile(desFolder+fileName, []byte(segment))
+			successMap[fileName] = true
 		}
 	}
 }
@@ -100,7 +100,14 @@ func downloadSegments(
 func downloadNewSegments(m3u8Url string, urlPrefix string, desFolder string, successMap map[string]bool) {
 	fmt.Println("download")
 	segmentList := getSegmentList(httpGet, m3u8Url)
-	downloadSegments(m3u8Url, urlPrefix, desFolder, successMap, segmentList)
+
+	if len(segmentList) == 0 {
+		return
+	}
+
+	segmentPrefix, _ := getSegmentFormat(segmentList[0])
+
+	downloadSegments(segmentPrefix, urlPrefix, desFolder, successMap, segmentList)
 }
 
 // download last 50 segments
@@ -118,7 +125,7 @@ func oldSegmentRecover(m3u8Url string, urlPrefix string, desFolder string, succe
 
 	oldSegmentList := getOldSegmentList(segmentPrefix, currentIndex, pastSegmentLimit)
 
-	downloadSegments(m3u8Url, urlPrefix, desFolder, successMap, oldSegmentList)
+	downloadSegments(segmentPrefix, urlPrefix, desFolder, successMap, oldSegmentList)
 }
 
 func mergeSegments(successMap map[string]bool, folder string, folderName string) {
@@ -131,7 +138,7 @@ func mergeSegments(successMap map[string]bool, folder string, folderName string)
 	}
 
 	for _, segment := range segments {
-		bytes, err := ioutil.ReadFile(filepath.Join(folder, segment))
+		bytes, err := os.ReadFile(filepath.Join(folder, segment))
 		if err != nil {
 			fmt.Println(err.Error())
 			continue

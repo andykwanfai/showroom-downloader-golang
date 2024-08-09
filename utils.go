@@ -62,7 +62,7 @@ func httpGet(url string) (string, error) {
 // get m3u8 from showroom website and api
 func getM3u8Url(httpGet httpClient, showroomUrl string) (string, error) {
 	html, _ := httpGet(showroomUrl)
-	r, _ := regexp.Compile("room_id=\\d+")
+	r, _ := regexp.Compile(`room_id=\d+`)
 	roomId := r.FindString(html)
 
 	if len(roomId) > 0 {
@@ -75,19 +75,19 @@ func getM3u8Url(httpGet httpClient, showroomUrl string) (string, error) {
 		json.Unmarshal([]byte(resp), &streamingUrls)
 		return streamingUrls.StreamingUrlList[0].Url, nil
 	}
-	return "", errors.New("Cannot find room")
+	return "", errors.New("cannot find room")
 }
 
 // get segment prefix from m3u8 url
 func getUrlPrefix(m3u8Url string) string {
-	r, _ := regexp.Compile("chunklist\\w*.m3u8")
-	return r.ReplaceAllString(m3u8Url, "")
+	index := strings.LastIndex(m3u8Url, "/")
+	return m3u8Url[:index+1]
 }
 
 // download segment list from m3u8
 func getSegmentList(httpGet httpClient, m3u8Url string) []string {
 	playlist, _ := httpGet(m3u8Url)
-	r, _ := regexp.Compile("media_\\w+.ts")
+	r, _ := regexp.Compile(`(?m)^\w*-\d+.ts`)
 	segmentList := r.FindAllString(playlist, -1)
 	return segmentList
 }
@@ -102,7 +102,7 @@ func writeFile(name string, data []byte) {
 
 // get prefix and index of segment from a segment name
 func getSegmentFormat(segment string) (prefix string, index int) {
-	r, _ := regexp.Compile("\\d+.ts")
+	r, _ := regexp.Compile(`\d+.ts`)
 
 	indexTs := r.FindString(segment)
 
@@ -154,4 +154,9 @@ func getAllSegments(successMap map[string]bool) []string {
 	})
 
 	return keys
+}
+
+func removeSegmentPrefix( segmentPrefix string) string {
+	r, _ := regexp.Compile(`\d+.ts`)
+	return r.FindString(segmentPrefix)
 }
