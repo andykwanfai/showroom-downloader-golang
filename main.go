@@ -19,7 +19,7 @@ func main() {
 		path = os.Args[2]
 	}
 
-	dtString := now().Format("20060102")
+	dtString := now().Format("060102")
 	urlSplits := strings.Split(url, "/")
 	folderName := fmt.Sprintf("%s-showroom-%s", dtString, urlSplits[len(urlSplits)-1])
 	desFolder := fmt.Sprintf("%s%s/", path, folderName)
